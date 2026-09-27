@@ -1,0 +1,13 @@
+metric,value,unit,slo,category,source
+P50,198.9222,ms,,latency,Actividad 3 - JSON k6
+P90,241.51082,ms,,latency,Actividad 3 - JSON k6
+P95,249.44063,ms,500,latency,Actividad 3 - JSON k6
+MAX,749.1375,ms,,latency,Actividad 3 - JSON k6
+THROUGHPUT,39.2351359212,req/s,,throughput,Actividad 3 - JSON k6
+ERROR_RATE,0.00,%,1,reliability,Actividad 3 - JSON k6
+VUS_MAX,100,VUs,,load,Actividad 3 - JSON k6
+CPU,<0.2,vCPU,,resource,Actividad 3 - Railway
+RAM,<200,MB,,resource,Actividad 3 - Railway
+DB_INTERNAL_ERROR_RATE,28.0,%,,service_health,Actividad 3 - panel de salud
+REQUESTS,11815,count,,volume,Actividad 3 - JSON k6
+OVER_500MS,11,count,500,latency,Actividad 3 - JSON k6

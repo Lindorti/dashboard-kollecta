@@ -1,0 +1,5 @@
+phase,start,end,vus,description,source
+Ramp-up,0:00,1:00,0-50,Aumento gradual de usuarios virtuales,Actividad 3 - diseño de carga
+Load,1:00,4:00,50,Meseta de carga sostenida,Actividad 3 - diseño de carga
+Spike,4:00,4:30,50-100,Incremento súbito de concurrencia,Actividad 3 - diseño de carga
+Ramp-down,4:30,5:00,100-0,Descenso gradual de usuarios,Actividad 3 - diseño de carga

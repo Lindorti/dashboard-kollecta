@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kollecta | Dashboard de Rendimiento A3</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111b2e;
+      --panel-2: #17243b;
+      --text: #e8eef8;
+      --muted: #9eb0c9;
+      --green: #38d39f;
+      --yellow: #f6c85f;
+      --red: #ff6b6b;
+      --blue: #5da9ff;
+      --border: #263751;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #09111f, #0d1728);
+      color: var(--text);
+    }
+    .container { max-width: 1450px; margin: auto; padding: 24px; }
+    header {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    h2 { font-size: 18px; margin: 0 0 14px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .source {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #0d1829;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .grid-kpi {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.16);
+    }
+    .kpi-title { color: var(--muted); font-size: 13px; }
+    .kpi-value { font-size: 30px; font-weight: 700; margin: 8px 0; }
+    .kpi-slo { font-size: 12px; color: var(--muted); }
+    .status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .ok { background: rgba(56,211,159,.15); color: var(--green); }
+    .warn { background: rgba(246,200,95,.15); color: var(--yellow); }
+    .bad { background: rgba(255,107,107,.15); color: var(--red); }
+    .chart-box { height: 330px; position: relative; }
+    .chart-box.small { height: 260px; }
+
+    /* Panel de recursos: valores de infraestructura sin mezclar unidades */
+    .resource-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      min-height: 220px;
+    }
+
+    .resource-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 18px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .resource-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .resource-card strong {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .resource-card small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .phase {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+    .phase strong { display: block; margin-bottom: 5px; }
+    .phase span { color: var(--muted); font-size: 12px; }
+    .findings {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .finding {
+      border-left: 4px solid var(--blue);
+      background: var(--panel-2);
+      padding: 14px;
+      border-radius: 10px;
+    }
+    .finding strong { display:block; margin-bottom: 5px; }
+    .finding p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 9px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    th { color: var(--muted); }
+    footer {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 16px 0 4px;
+      line-height: 1.5;
+    }
+    .error {
+      background: rgba(255,107,107,.12);
+      border: 1px solid rgba(255,107,107,.35);
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .resource-box { display:grid; grid-template-columns:1fr 1fr; gap:16px; min-height:220px; align-items:stretch; }
+    .resource-card { background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:28px 18px; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+    .resource-card span { display:block; color:var(--muted); font-size:14px; margin-bottom:10px; }
+    .resource-card strong { display:block; font-size:28px; margin-bottom:10px; }
+    .resource-card small { color:var(--muted); font-size:12px; line-height:1.4; }
+
+    @media (max-width: 950px) {
+      .grid-kpi, .grid-2, .findings, .phase-grid, .resource-box { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Kollecta — Dashboard de Rendimiento y Observabilidad</h1>
+    <p class="subtitle">Actividad 3 · Prueba de carga con k6 · Endpoint de verificación de firmas</p>
+    <div class="source">
+      <strong>Fuente de datos:</strong> archivos CSV derivados de la telemetría de k6 y de la observabilidad documentada en la Actividad 3.
+      <br><strong>SLO:</strong> P95 &lt; 500 ms · Error rate &lt; 1 %.
+      <br><strong>Escenario:</strong> ramp-up → carga 50 VUs → spike 100 VUs → ramp-down.
+    </div>
+  </header>
+
+  <div id="loadError" class="error"></div>
+
+  <section class="grid-kpi">
+    <div class="card">
+      <div class="kpi-title">P95 de latencia</div>
+      <div class="kpi-value" id="kpiP95">—</div>
+      <div class="kpi-slo">SLO: &lt; 500 ms</div>
+      <span id="statusP95" class="status">Cargando</span>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Tasa de error HTTP</div>
+      <div class="kpi-value" id="kpiError">—</div>
+      <div class="kpi-slo">SLO: &lt; 1 %</div>
+      <span id="statusError" class="status">Cargando</span>
+    </div>
+    <div class="card">
+      <div class="kpi-title">Throughput</div>
+      <div class="kpi-value" id="kpiThroughput">—</div>
+      <div class="kpi-slo">Peticiones por segundo</div>
+      <span class="status ok">Dato A3</span>
+    </div>
+    <div class="card">
+      <div class="kpi-title">VUs máximos</div>
+      <div class="kpi-value" id="kpiVus">—</div>
+      <div class="kpi-slo">Concurrencia máxima registrada</div>
+      <span class="status ok">Dato A3</span>
+    </div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>Panel 1 — Latencia por percentiles</h2>
+      <div class="chart-box"><canvas id="percentilesChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Panel 2 — P95 frente al SLO</h2>
+      <div class="chart-box"><canvas id="sloChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>Panel 3 — Throughput</h2>
+      <div class="chart-box small"><canvas id="throughputChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Panel 4 — Tasa de errores</h2>
+      <div class="chart-box small"><canvas id="errorChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>Panel 5 — Recursos de infraestructura</h2>
+      <div class="resource-box">
+        <div class="resource-card">
+          <span>CPU</span>
+          <strong>&lt; 0,2 vCPU</strong>
+          <small>Consumo reportado durante la prueba en Railway</small>
+        </div>
+        <div class="resource-card">
+          <span>RAM</span>
+          <strong>&lt; 200 MB</strong>
+          <small>Memoria estabilizada durante la ejecución</small>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Panel 6 — Hallazgo interno de servicios</h2>
+      <div class="chart-box small"><canvas id="internalChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:14px;">
+    <h2>Anotaciones del escenario de prueba A3</h2>
+    <div class="phase-grid">
+      <div class="phase"><strong>Ramp-up</strong><span>0 → 50 VUs · 1 minuto</span></div>
+      <div class="phase"><strong>Load</strong><span>50 VUs · 3 minutos</span></div>
+      <div class="phase"><strong>Spike</strong><span>50 → 100 VUs · 30 segundos</span></div>
+      <div class="phase"><strong>Ramp-down</strong><span>100 → 0 VUs · 30 segundos</span></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:14px;">
+    <h2>Hallazgos de observabilidad</h2>
+    <div class="findings">
+      <div class="finding">
+        <strong>Pico de latencia</strong>
+        <p>El máximo registrado fue 749,14 ms, aunque el P95 permaneció en 249,44 ms.</p>
+      </div>
+      <div class="finding">
+        <strong>Solicitudes sobre 500 ms</strong>
+        <p>11 peticiones superaron el umbral de 500 ms en el conjunto de resultados detallado.</p>
+      </div>
+      <div class="finding">
+        <strong>Database</strong>
+        <p>La observabilidad documentada reportó 28 % de transacciones internas marcadas como error bajo carga.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Trazabilidad de datos</h2>
+    <table>
+      <thead>
+        <tr><th>Métrica</th><th>Valor</th><th>Unidad</th><th>SLO</th><th>Fuente</th></tr>
+      </thead>
+      <tbody id="dataTable"></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <strong>Nota:</strong> este dashboard utiliza como fuente principal los valores detallados del JSON de k6 conservado en la Actividad 3.
+    El documento también contiene otra salida de ejecución con P95 de 255,02 ms; para este panel se seleccionó la ejecución detallada del JSON, con P95 de 249,44 ms.
+    La disponibilidad mensual de 99,9 % no se infiere de una prueba de carga de aproximadamente cinco minutos; requiere medición continua.
+  </footer>
+</div>
+
+<script>
+const charts = {};
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines.shift().split(",").map(x => x.trim());
+  return lines.filter(Boolean).map(line => {
+    const cols = line.split(",").map(x => x.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = cols[i] ?? "");
+    return obj;
+  });
+}
+
+async function loadCSV(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`No se pudo leer ${path}`);
+  return parseCSV(await response.text());
+}
+
+function num(rows, metric) {
+  const row = rows.find(r => r.metric === metric);
+  return row ? Number(row.value) : null;
+}
+
+function setStatus(elementId, ok, text) {
+  const el = document.getElementById(elementId);
+  el.textContent = text;
+  el.className = "status " + (ok ? "ok" : "bad");
+}
+
+function destroyChart(id) {
+  if (charts[id]) charts[id].destroy();
+}
+
+function commonOptions(yTitle, max = undefined) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: "#e8eef8" } }
+    },
+    scales: {
+      x: { ticks: { color: "#9eb0c9" }, grid: { color: "#263751" } },
+      y: {
+        beginAtZero: true,
+        suggestedMax: max,
+        ticks: { color: "#9eb0c9" },
+        grid: { color: "#263751" },
+        title: { display: true, text: yTitle, color: "#9eb0c9" }
+      }
+    }
+  };
+}
+
+async function initDashboard() {
+  try {
+    const metrics = await loadCSV("data/kollecta_metricas.csv");
+
+    const p50 = num(metrics, "P50");
+    const p90 = num(metrics, "P90");
+    const p95 = num(metrics, "P95");
+    const max = num(metrics, "MAX");
+    const throughput = num(metrics, "THROUGHPUT");
+    const errorRate = num(metrics, "ERROR_RATE");
+    const vus = num(metrics, "VUS_MAX");
+    const cpu = num(metrics, "CPU");
+    const ram = num(metrics, "RAM");
+    const dbError = num(metrics, "DB_INTERNAL_ERROR_RATE");
+
+    document.getElementById("kpiP95").textContent = `${p95.toFixed(2)} ms`;
+    document.getElementById("kpiError").textContent = `${errorRate.toFixed(2)} %`;
+    document.getElementById("kpiThroughput").textContent = `${throughput.toFixed(2)} req/s`;
+    document.getElementById("kpiVus").textContent = vus;
+
+    setStatus("statusP95", p95 < 500, p95 < 500 ? "SLO CUMPLIDO" : "SLO INCUMPLIDO");
+    setStatus("statusError", errorRate < 1, errorRate < 1 ? "SLO CUMPLIDO" : "SLO INCUMPLIDO");
+
+    destroyChart("percentilesChart");
+    charts["percentilesChart"] = new Chart(document.getElementById("percentilesChart"), {
+      type: "line",
+      data: {
+        labels: ["P50", "P90", "P95", "Máximo"],
+        datasets: [
+          {
+            label: "Latencia",
+            data: [p50, p90, p95, max],
+            borderColor: "#5da9ff",
+            backgroundColor: "rgba(93,169,255,.18)",
+            fill: true,
+            tension: .25
+          },
+          {
+            label: "SLO 500 ms",
+            data: [500, 500, 500, 500],
+            borderColor: "#ff6b6b",
+            borderDash: [7, 6],
+            pointRadius: 0,
+            fill: false
+          }
+        ]
+      },
+      options: commonOptions("ms", 800)
+    });
+
+    destroyChart("sloChart");
+    charts["sloChart"] = new Chart(document.getElementById("sloChart"), {
+      type: "bar",
+      data: {
+        labels: ["P95 observado", "SLO"],
+        datasets: [{
+          label: "Latencia (ms)",
+          data: [p95, 500],
+          backgroundColor: ["#38d39f", "#ff6b6b"]
+        }]
+      },
+      options: commonOptions("ms", 600)
+    });
+
+    destroyChart("throughputChart");
+    charts["throughputChart"] = new Chart(document.getElementById("throughputChart"), {
+      type: "bar",
+      data: {
+        labels: ["Throughput A3"],
+        datasets: [{
+          label: "req/s",
+          data: [throughput],
+          backgroundColor: "#5da9ff"
+        }]
+      },
+      options: commonOptions("req/s")
+    });
+
+    destroyChart("errorChart");
+    charts["errorChart"] = new Chart(document.getElementById("errorChart"), {
+      type: "bar",
+      data: {
+        labels: ["HTTP error rate", "SLO"],
+        datasets: [{
+          label: "%",
+          data: [errorRate, 1],
+          backgroundColor: ["#38d39f", "#ff6b6b"]
+        }]
+      },
+      options: commonOptions("%", 1.2)
+    });
+
+
+    destroyChart("internalChart");
+    charts["internalChart"] = new Chart(document.getElementById("internalChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Database sin error interno", "Database marcado como error"],
+        datasets: [{
+          data: [100 - dbError, dbError],
+          backgroundColor: ["#38d39f", "#ff6b6b"]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#e8eef8" } }
+        }
+      }
+    });
+
+    const tbody = document.getElementById("dataTable");
+    tbody.innerHTML = "";
+    metrics.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.metric}</td><td>${r.value}</td><td>${r.unit}</td><td>${r.slo || "—"}</td><td>${r.source}</td>`;
+      tbody.appendChild(tr);
+    });
+
+  } catch (error) {
+    const box = document.getElementById("loadError");
+    box.style.display = "block";
+    box.textContent = "Error cargando los CSV. Abre el proyecto mediante Live Server en VS Code (no directamente con file://). Detalle: " + error.message;
+    console.error(error);
+  }
+}
+
+initDashboard();
+</script>
+</body>
+</html>
